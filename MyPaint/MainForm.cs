@@ -117,9 +117,9 @@ namespace MyPaint
         public void ShowPosition(int x, int y)
         {
             if (x != -1)
-                statusLabelPosition.Text = $"X: {x} Y: {y}";
+                toolStripLabelPosition.Text = $"X: {x} Y: {y}";
             else
-                statusLabelPosition.Text = string.Empty;
+                toolStripLabelPosition.Text = string.Empty;
         }
 
         private void toolStripButton6_Click(object sender, EventArgs e)
@@ -244,7 +244,7 @@ namespace MyPaint
             сохранитьКакToolStripMenuItem.Enabled = d != null;
         }
 
-        private void toolStripButton8_Click(object sender, EventArgs e)
+        private void toolStripButtonZoomIn_Click(object sender, EventArgs e)
         {
             if (ActiveMdiChild is FormDocument d)
             {
@@ -252,7 +252,7 @@ namespace MyPaint
             }
         }
 
-        private void toolStripButton10_Click(object sender, EventArgs e)
+        private void toolStripButtonZoomOut_Click(object sender, EventArgs e)
         {
             if (ActiveMdiChild is FormDocument d)
             {

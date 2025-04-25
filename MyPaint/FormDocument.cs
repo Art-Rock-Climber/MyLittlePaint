@@ -96,6 +96,55 @@ namespace MyPaint
             x = (int)((e.X - AutoScrollPosition.X) / size);
             y = (int)((e.Y - AutoScrollPosition.Y) / size);
 
+            if (e.Button == MouseButtons.Left)
+            {
+                var brush = new SolidBrush(MainForm.CurrentColor);
+
+                switch (MainForm.CurrentTool)
+                {
+                    case DrawTools.PaintBucket:
+                        ScanlineFloodFill(x, y, MainForm.CurrentColor);
+                        bmpTemp = (Bitmap)bmp.Clone();
+                        Invalidate();
+                        break;
+                    case DrawTools.Text:
+                        var inputForm = new TextInputForm();
+                        if (inputForm.ShowDialog(this) == DialogResult.OK)
+                        {
+                            MainForm.CurrentText = inputForm.TextValue;
+                            using (var g = Graphics.FromImage(bmp))
+                            {
+                                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+                                g.DrawString(MainForm.CurrentText,
+                                           new Font(DefaultFont.FontFamily, MainForm.CurrentWidth * 5 / size),
+                                           brush, x, y);
+                                bmpTemp = (Bitmap)bmp.Clone();
+                                Invalidate();
+                            }
+                        }
+                        break;
+
+                    case DrawTools.Star:
+                        var starSettingsForm = new StarSettingsForm();
+                        if (starSettingsForm.ShowDialog() == DialogResult.OK)
+                        {
+                            using (var g = Graphics.FromImage(bmp))
+                            {
+                                var pen = new Pen(MainForm.CurrentColor, MainForm.CurrentWidth / size);
+                                int points = starSettingsForm.Points;
+                                float ratio = starSettingsForm.InnerOuterRatio;
+                                int outerRadius = (int)(50 / size);
+
+                                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                                DrawStar(g, pen, brush, x, y, outerRadius, points, ratio);
+                                bmpTemp = (Bitmap)bmp.Clone();
+                                Invalidate();
+                            }
+                        }
+                        break;
+                }
+            }
         }
 
         private void FormDocument_MouseMove(object sender, MouseEventArgs e)
@@ -105,14 +154,15 @@ namespace MyPaint
                 var pen = new Pen(MainForm.CurrentColor, MainForm.CurrentWidth / size);
                 var brush = new SolidBrush(MainForm.CurrentColor);
 
-                float scaledX = (e.X - AutoScrollPosition.X / size);
-                float scaledY = (e.Y - AutoScrollPosition.Y / size);
+                float scaledX = (e.X - AutoScrollPosition.X) / size;
+                float scaledY = (e.Y - AutoScrollPosition.Y) / size;
 
                 switch (MainForm.CurrentTool)
                 {
                     case DrawTools.Pen:
                         using (var g = Graphics.FromImage(bmp))
                         {
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                             g.DrawLine(pen, x, y, scaledX, scaledY);
                             x = (int)scaledX;
                             y = (int)scaledY;
@@ -124,6 +174,7 @@ namespace MyPaint
                         bmpTemp = (Bitmap)bmp.Clone();
                         using (var g = Graphics.FromImage(bmpTemp))
                         {
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                             g.DrawLine(pen, x, y, scaledX, scaledY);
                             Invalidate();
                         }
@@ -132,6 +183,7 @@ namespace MyPaint
                         bmpTemp = (Bitmap)bmp.Clone();
                         using (var g = Graphics.FromImage(bmpTemp))
                         {
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                             g.DrawEllipse(pen, new Rectangle(x, y, (int)(scaledX - x), (int)(scaledY - y)));
                             Invalidate();
                         }
@@ -140,7 +192,7 @@ namespace MyPaint
                         bmpTemp = (Bitmap)bmp.Clone();
                         using (var g = Graphics.FromImage(bmpTemp))
                         {
-                            //g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                             g.FillEllipse(brush, new Rectangle(x, y, (int)(scaledX - x), (int)(scaledY - y)));
 
                             Invalidate();
@@ -150,6 +202,7 @@ namespace MyPaint
                         bmpTemp = (Bitmap)bmp.Clone();
                         using (var g = Graphics.FromImage(bmpTemp))
                         {
+                            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                             g.DrawRectangle(pen, new Rectangle(x, y, (int)(scaledX - x), (int)(scaledY - y)));
                             Invalidate();
                         }
@@ -165,43 +218,6 @@ namespace MyPaint
                             Invalidate();
                         }
                         break;
-                    case DrawTools.Text:
-                        var inputForm = new TextInputForm();
-                        if (inputForm.ShowDialog(this) == DialogResult.OK)
-                        {
-                            MainForm.CurrentText = inputForm.TextValue;
-                            string text = MainForm.CurrentText;
-                            using (var g = Graphics.FromImage(bmp))
-                            {
-                                g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-                                g.DrawString(text, new Font(DefaultFont.FontFamily, MainForm.CurrentWidth * 5 / size), brush, scaledX, scaledY);
-                                bmpTemp = (Bitmap)bmp.Clone();
-                                Invalidate();
-                            }
-                        }
-                        break;
-                    case DrawTools.PaintBucket:
-                        ScanlineFloodFill((int)scaledX, (int)scaledY, MainForm.CurrentColor);
-                        bmpTemp = (Bitmap)bmp.Clone();
-                        Invalidate();
-                        break;
-                    case DrawTools.Star:
-                        bmpTemp = (Bitmap)bmp.Clone();
-                        using (var g = Graphics.FromImage(bmp))
-                        {
-                            var starSettingsForm = new StarSettingsForm();
-                            if (starSettingsForm.ShowDialog() == DialogResult.OK)
-                            {
-                                int points = starSettingsForm.Points;
-                                float ratio = starSettingsForm.InnerOuterRatio;
-
-                                int outerRadius = (int)(50 / size); ; // Радиус по расстоянию от начальной точки
-                                DrawStar(g, pen, brush, (int)scaledX, (int)scaledY, outerRadius, points, ratio);
-                            }
-                            bmpTemp = (Bitmap)bmp.Clone();
-                            Invalidate();
-                        }
-                        break;
                 }
 
                 var parent = MdiParent as MainForm;
@@ -212,7 +228,7 @@ namespace MyPaint
         private void ScanlineFloodFill(int x, int y, Color newColor)
         {
             Color targetColor = bmp.GetPixel(x, y);
-            if (ColorsAreClose(targetColor, newColor)) return;
+            if (AreColorsClose(targetColor, newColor)) return;
 
             Stack<Point> pixels = new Stack<Point>();
             pixels.Push(new Point(x, y));
@@ -224,7 +240,7 @@ namespace MyPaint
                 int currentY = p.Y;
 
                 // Найдем левую границу заливки
-                while (currentX >= 0 && ColorsAreClose(bmp.GetPixel(currentX, currentY), targetColor))
+                while (currentX >= 0 && AreColorsClose(bmp.GetPixel(currentX, currentY), targetColor))
                     currentX--;
                 currentX++; // Вернемся на один пиксель вправо
 
@@ -232,18 +248,18 @@ namespace MyPaint
                 bool spanBelow = false;
 
                 // Заливаем вправо до конца области
-                while (currentX < bmp.Width && ColorsAreClose(bmp.GetPixel(currentX, currentY), targetColor))
+                while (currentX < bmp.Width && AreColorsClose(bmp.GetPixel(currentX, currentY), targetColor))
                 {
                     bmp.SetPixel(currentX, currentY, newColor);
 
                     if (currentY > 0) // Проверка строки выше
                     {
-                        if (!spanAbove && ColorsAreClose(bmp.GetPixel(currentX, currentY - 1), targetColor))
+                        if (!spanAbove && AreColorsClose(bmp.GetPixel(currentX, currentY - 1), targetColor))
                         {
                             pixels.Push(new Point(currentX, currentY - 1));
                             spanAbove = true;
                         }
-                        else if (spanAbove && !ColorsAreClose(bmp.GetPixel(currentX, currentY - 1), targetColor))
+                        else if (spanAbove && !AreColorsClose(bmp.GetPixel(currentX, currentY - 1), targetColor))
                         {
                             spanAbove = false;
                         }
@@ -251,12 +267,12 @@ namespace MyPaint
 
                     if (currentY < bmp.Height - 1) // Проверка строки ниже
                     {
-                        if (!spanBelow && ColorsAreClose(bmp.GetPixel(currentX, currentY + 1), targetColor))
+                        if (!spanBelow && AreColorsClose(bmp.GetPixel(currentX, currentY + 1), targetColor))
                         {
                             pixels.Push(new Point(currentX, currentY + 1));
                             spanBelow = true;
                         }
-                        else if (spanBelow && !ColorsAreClose(bmp.GetPixel(currentX, currentY + 1), targetColor))
+                        else if (spanBelow && !AreColorsClose(bmp.GetPixel(currentX, currentY + 1), targetColor))
                         {
                             spanBelow = false;
                         }
@@ -267,7 +283,7 @@ namespace MyPaint
             }
         }
 
-        private bool ColorsAreClose(Color c1, Color c2, int tolerance = 2)
+        private bool AreColorsClose(Color c1, Color c2, int tolerance = 2)
         {
             return Math.Abs(c1.A - c2.A) <= tolerance &&  // Проверка альфа-канала
                 Math.Abs(c1.R - c2.R) <= tolerance &&
@@ -304,16 +320,13 @@ namespace MyPaint
         {
             base.OnPaint(e);
 
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            e.Graphics.ScaleTransform(size, size);
+    
             int scrollX = AutoScrollPosition.X;
             int scrollY = AutoScrollPosition.Y;
-            e.Graphics.DrawImage(
-                bmpTemp, 
-                scrollX, 
-                scrollY,
-                bmp.Width,
-                bmp.Height
-            );
-
+            e.Graphics.DrawImage(bmpTemp, scrollX / size, scrollY / size);
 
         }
 
@@ -456,20 +469,7 @@ namespace MyPaint
 
         public void ApplyZoom()
         {
-            int newWidth = (int)(baseSize.Width * size);
-            int newHeight = (int)(baseSize.Height * size);
-
-            Bitmap scaledBmp = new Bitmap(newWidth, newHeight);
-
-            using (Graphics g = Graphics.FromImage(scaledBmp))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.DrawImage(bmp, 0, 0, newWidth, newHeight);
-            }
-
-            bmp.Dispose();
-            bmp = scaledBmp;
-            AutoScrollMinSize = new Size(newWidth, newHeight);
+            AutoScrollMinSize = new Size((int)(baseSize.Width * size), (int)(baseSize.Height * size));
             Invalidate();
         }
 
@@ -482,7 +482,7 @@ namespace MyPaint
 
         public void ZoomOut()
         {
-            if (size < 0.5) return;
+            if (size < 0.6) return;
             size -= 0.1f;
             ApplyZoom();
         }
