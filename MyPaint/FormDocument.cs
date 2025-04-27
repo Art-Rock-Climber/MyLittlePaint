@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PluginInterface;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,14 +17,18 @@ namespace MyPaint
 {
     public partial class FormDocument : Form
     {
+        private Stack<Bitmap> _undoStack = new Stack<Bitmap>();
+        private Stack<Bitmap> _redoStack = new Stack<Bitmap>();
+        private const int MaxHistorySteps = 20;
+
         private int x, y;
 
         /// <summary>
         /// Битовая карта
         /// </summary>
-        private Bitmap bmp;
+        public Bitmap bmp;
 
-        private Bitmap bmpTemp;
+        public Bitmap bmpTemp;
 
         private bool isModified;
 
@@ -47,6 +52,8 @@ namespace MyPaint
             baseSize = new Size(ClientSize.Width, ClientSize.Height);
             ClearBMP(bmp);
             ClearBMP(bmpTemp);
+
+            ClearHistory();
         }
 
         public FormDocument(Bitmap bmp, string filePath = null)
@@ -98,6 +105,8 @@ namespace MyPaint
 
             if (e.Button == MouseButtons.Left)
             {
+                SaveUndoState();
+
                 var brush = new SolidBrush(MainForm.CurrentColor);
 
                 switch (MainForm.CurrentTool)
@@ -355,6 +364,7 @@ namespace MyPaint
             //}
             bmp = (Bitmap)bmpTemp.Clone();
             Invalidate();
+            (MdiParent as MainForm)?.UpdateUndoRedoButtons();
         }
 
         private void FormDocument_MouseEnter(object sender, EventArgs e)
@@ -493,6 +503,107 @@ namespace MyPaint
             {
                 g.Clear(Color.White);
             }
+        }
+
+        public void ApplyPlugin(IPlugin plugin)
+        {
+            SaveUndoState();
+            try
+            {
+                using (var tempBitmap = (Bitmap)bmp.Clone())
+                {
+                    plugin.Transform(tempBitmap);
+
+                    bmp = (Bitmap)tempBitmap.Clone();
+                    bmpTemp = (Bitmap)bmp.Clone();
+                    Invalidate();
+
+                    (MdiParent as MainForm)?.UpdateUndoRedoButtons();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при применении плагина:\n{ex.Message}",
+                              "Ошибка",
+                              MessageBoxButtons.OK,
+                              MessageBoxIcon.Error);
+
+                // Восстанавливаем предыдущее состояние в случае ошибки
+                if (CanUndo())
+                {
+                    bmp = _undoStack.Pop();
+                    bmpTemp = (Bitmap)bmp.Clone();
+                }
+            }
+        }
+
+        public void UndoLastAction()
+        {
+            if (CanUndo())
+            {
+                _redoStack.Push((Bitmap)bmp.Clone()); // Сохраняем текущее состояние в redo
+
+                var previousState = _undoStack.Pop(); // Восстанавливаем предыдущее состояние
+                bmp?.Dispose(); // Освобождаем текущее изображение
+                bmp = (Bitmap)previousState.Clone();
+                bmpTemp = (Bitmap)bmp.Clone();
+
+                previousState.Dispose(); // Освобождаем временный объект
+                Invalidate();
+            }
+
+            (MdiParent as MainForm)?.UpdateUndoRedoButtons();
+        }
+
+        private void SaveUndoState()
+        {
+            ClearRedoStack();
+
+            if (_undoStack.Count >= MaxHistorySteps) // Ограничение глубины отмены
+            {
+                var oldest = _undoStack.Last();
+                oldest.Dispose();
+                _undoStack = new Stack<Bitmap>(_undoStack.Take(MaxHistorySteps - 1).Reverse());
+            }
+            _undoStack.Push((Bitmap)bmp.Clone());
+        }
+
+        private void ClearRedoStack()
+        {
+            foreach (var bitmap in _redoStack)
+            {
+                bitmap.Dispose();
+            }
+            _redoStack.Clear();
+        }
+
+        public void RedoLastAction()
+        {
+            if (CanRedo())
+            {
+                _undoStack.Push((Bitmap)bmp.Clone()); // Сохраняем текущее состояние в undo
+
+                var nextState = _redoStack.Pop(); // Восстанавливаем отмененное состояние
+                bmp?.Dispose(); // Освобождаем текущее изображение
+                bmp = (Bitmap)nextState.Clone();
+                bmpTemp = (Bitmap)bmp.Clone();
+
+                nextState.Dispose(); // Освобождаем временный объект
+                Invalidate();
+            }
+
+            (MdiParent as MainForm)?.UpdateUndoRedoButtons();
+        }
+
+        public bool CanUndo() => _undoStack.Count > 0;
+        public bool CanRedo() => _redoStack.Count > 0;
+
+        public void ClearHistory()
+        {
+            foreach (var bitmap in _undoStack) bitmap.Dispose();
+            foreach (var bitmap in _redoStack) bitmap.Dispose();
+            _undoStack.Clear();
+            _redoStack.Clear();
         }
     }
 }
