@@ -338,6 +338,14 @@ namespace MyPaint
                 toolStripLabelPosition.Text = string.Empty;
         }
 
+        public void ShowSize(int width, int height)
+        {
+            if (width != -1)
+                toolStripLabelSize.Text = $"{width}x{height} пикс.";
+            else
+                toolStripLabelSize.Text = "---";
+        }
+
         private void toolStripButtonZoomIn_Click(object sender, EventArgs e)
         {
             if (ActiveMdiChild is FormDocument d)

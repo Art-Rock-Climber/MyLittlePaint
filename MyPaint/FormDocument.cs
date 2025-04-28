@@ -185,6 +185,10 @@ namespace MyPaint
                         {
                             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                             g.DrawLine(pen, x, y, scaledX, scaledY);
+
+                            int lineWidth = Math.Abs((int)(scaledX - x));
+                            int lineHeight = Math.Abs((int)(scaledY - y));
+                            (MdiParent as MainForm)?.ShowSize(lineWidth, lineHeight);
                             Invalidate();
                         }
                         break;
@@ -193,7 +197,12 @@ namespace MyPaint
                         using (var g = Graphics.FromImage(bmpTemp))
                         {
                             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                            g.DrawEllipse(pen, new Rectangle(x, y, (int)(scaledX - x), (int)(scaledY - y)));
+
+                            int rectWidth = (int)(scaledX - x);
+                            int rectHeight = (int)(scaledY - y);
+                            g.DrawEllipse(pen, new Rectangle(x, y, rectWidth, rectHeight));
+
+                            (MdiParent as MainForm)?.ShowSize(Math.Abs(rectWidth), Math.Abs(rectHeight));
                             Invalidate();
                         }
                         break;
@@ -202,8 +211,12 @@ namespace MyPaint
                         using (var g = Graphics.FromImage(bmpTemp))
                         {
                             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                            g.FillEllipse(brush, new Rectangle(x, y, (int)(scaledX - x), (int)(scaledY - y)));
 
+                            int diameterX = (int)(scaledX - x);
+                            int diameterY = (int)(scaledY - y);
+                            g.FillEllipse(brush, new Rectangle(x, y, diameterX, diameterY));
+
+                            (MdiParent as MainForm)?.ShowSize(Math.Abs(diameterX), Math.Abs(diameterY));
                             Invalidate();
                         }
                         break;
@@ -212,7 +225,14 @@ namespace MyPaint
                         using (var g = Graphics.FromImage(bmpTemp))
                         {
                             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                            g.DrawRectangle(pen, new Rectangle(x, y, (int)(scaledX - x), (int)(scaledY - y)));
+
+                            int rectX = Math.Min(x, (int)scaledX);
+                            int rectY = Math.Min(y, (int)scaledY);
+                            int rectWidth = Math.Abs((int)(scaledX - x));
+                            int rectHeight = Math.Abs((int)(scaledY - y));
+                            g.DrawRectangle(pen, rectX, rectY, rectWidth, rectHeight);
+
+                            (MdiParent as MainForm)?.ShowSize(rectWidth, rectHeight);
                             Invalidate();
                         }
                         break;
@@ -229,8 +249,7 @@ namespace MyPaint
                         break;
                 }
 
-                var parent = MdiParent as MainForm;
-                parent?.ShowPosition((int)scaledX, (int)scaledY);
+                (MdiParent as MainForm)?.ShowPosition((int)scaledX, (int)scaledY);
             }
         }
 
@@ -343,6 +362,7 @@ namespace MyPaint
         {
             var parent = MdiParent as MainForm;
             parent?.ShowPosition(-1, -1);
+            parent?.ShowSize(-1, -1);
         }
 
         private void FormDocument_MouseUp(object sender, MouseEventArgs e)
