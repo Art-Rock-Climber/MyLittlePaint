@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginInterface", "PluginIn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginsClassLibrary", "PluginsClassLibrary\PluginsClassLibrary.csproj", "{9C53D0BB-9DC2-4E85-B312-F488421FACB0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PluginManager", "ConfigManager\PluginManager.csproj", "{2DB78489-1D3E-4CE4-836A-62DB0F1AEFEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{9C53D0BB-9DC2-4E85-B312-F488421FACB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C53D0BB-9DC2-4E85-B312-F488421FACB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9C53D0BB-9DC2-4E85-B312-F488421FACB0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2DB78489-1D3E-4CE4-836A-62DB0F1AEFEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2DB78489-1D3E-4CE4-836A-62DB0F1AEFEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2DB78489-1D3E-4CE4-836A-62DB0F1AEFEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2DB78489-1D3E-4CE4-836A-62DB0F1AEFEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

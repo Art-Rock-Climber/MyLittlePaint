@@ -1,4 +1,5 @@
 ﻿using PluginInterface;
+using PluginManager;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -26,7 +27,8 @@ namespace MyPaint
             CurrentText = string.Empty;
             ImageIndex = 0;
 
-            FindPlugins();
+            LoadPlugins();
+            //FindPlugins();
             CreatePluginsMenu();
         }
 
@@ -207,7 +209,7 @@ namespace MyPaint
                         if (iface != null)
                         {
                             IPlugin plugin = (IPlugin)Activator.CreateInstance(type);
-                            plugins.Add(plugin.NameRus, plugin);
+                            plugins.Add(plugin.Name, plugin);
                         }
                     }
                 }
@@ -217,11 +219,21 @@ namespace MyPaint
                 }
         }
 
+        private void LoadPlugins()
+        {
+            var loadedPlugins = PluginLoader.LoadPlugins(AppDomain.CurrentDomain.BaseDirectory);
+
+            foreach (var plugin in loadedPlugins)
+            {
+                plugins.Add(plugin.Name, plugin);
+            }
+        }
+
         private void OnPluginClick(object sender, EventArgs args)
         {
             if (ActiveMdiChild is FormDocument d)
             {
-                string pluginName = ((ToolStripMenuItem)sender).Text;
+                string pluginName = (((ToolStripMenuItem)sender).Tag as IPlugin).Name;
                 if (plugins.TryGetValue(pluginName, out IPlugin plugin))
                 {
                     d.ApplyPlugin(plugin);
@@ -231,12 +243,43 @@ namespace MyPaint
 
         private void CreatePluginsMenu()
         {
-            foreach (var p in plugins)
+            фильтрыToolStripMenuItem.DropDownItems.Clear();
+
+            // Добавляем пункт управления плагинами
+            var manageItem = new ToolStripMenuItem("Управление плагинами...");
+            manageItem.Click += ShowPluginManagerDialog;
+            фильтрыToolStripMenuItem.DropDownItems.Add(manageItem);
+
+            // Добавляем разделитель
+            фильтрыToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+
+            // Добавляем плагины
+            foreach (var plugin in plugins.Values)
             {
-                var item = фильтрыToolStripMenuItem.DropDownItems.Add(p.Value.NameRus);
+                var item = new ToolStripMenuItem(plugin.NameRus);
+                item.Tag = plugin;
                 item.Click += OnPluginClick;
+                фильтрыToolStripMenuItem.DropDownItems.Add(item);
             }
         }
+
+        private void ShowPluginManagerDialog(object sender, EventArgs e)
+        {
+            var config = ConfigManager.LoadConfig(plugins.Values.ToList());
+            using (var dialog = new PluginManagerDialogForm(config))
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    ConfigManager.SaveConfig(config);
+
+                    // Перезагружаем плагины
+                    plugins.Clear();
+                    LoadPlugins();
+                    CreatePluginsMenu();
+                }
+            }
+        }
+
 
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
