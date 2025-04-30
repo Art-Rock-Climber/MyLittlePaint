@@ -10,7 +10,9 @@ namespace PluginInterface
     public interface IPlugin
     {
         string Name { get; }
+        string NameRus { get; }
         string Author { get; }
+        string AuthorRus { get; }
         void Transform(Bitmap app);
     }
 

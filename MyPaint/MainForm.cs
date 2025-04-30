@@ -207,7 +207,7 @@ namespace MyPaint
                         if (iface != null)
                         {
                             IPlugin plugin = (IPlugin)Activator.CreateInstance(type);
-                            plugins.Add(plugin.Name, plugin);
+                            plugins.Add(plugin.NameRus, plugin);
                         }
                     }
                 }
@@ -233,7 +233,7 @@ namespace MyPaint
         {
             foreach (var p in plugins)
             {
-                var item = фильтрыToolStripMenuItem.DropDownItems.Add(p.Value.Name);
+                var item = фильтрыToolStripMenuItem.DropDownItems.Add(p.Value.NameRus);
                 item.Click += OnPluginClick;
             }
         }

@@ -11,8 +11,10 @@ namespace PluginsClassLibrary
     [Version(1, 0)]
     public class ReverseTransform : IPlugin
     {
-        public string Name => "Переворот изображения";
-        public string Author => "Банников Владислав";
+        public string Name => "Reverse_Transform";
+        public string NameRus => "Переворот изображения";
+        public string Author => "Bannikov_Vladislav";
+        public string AuthorRus => "Банников Владислав";
 
         public void Transform(Bitmap bitmap)
         {
